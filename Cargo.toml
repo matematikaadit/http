@@ -19,7 +19,7 @@ hyper-native-tls = "0.2"
 lazy_static = "0.2"
 mime_guess = "1.8"
 lazysort = "0.1"
-brotli2 = "0.2"
+brotli2 = "0.3"
 unicase = "1.4"
 base64 = "0.5"
 flate2 = "0.2"
@@ -43,6 +43,9 @@ embed-resource = "1.1"
 
 
 [[bin]]
-name = "http"
+# `http` command name is already taken by HTTPie
+name = "httpserver"
+# for silencing the cargo warning
+path = "src/main.rs"
 test = false
 doc = false

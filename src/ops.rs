@@ -1,4 +1,5 @@
 use md6;
+use utf8;
 use std::iter;
 use time::now;
 use std::borrow::Cow;
@@ -911,7 +912,7 @@ impl Clone for HttpHandler {
 /// ```
 pub fn try_ports<H: Handler + Clone>(hndlr: H, from: u16, up_to: u16, tls_data: &Option<((String, PathBuf), String)>) -> Result<Listening, Error> {
     for port in from..up_to + 1 {
-        let ir = Iron::new(hndlr.clone());
+        let ir = Iron::new(utf8::chainer(hndlr.clone()));
         match if let Some(&((_, ref id), ref pw)) = tls_data.as_ref() {
             ir.https(("0.0.0.0", port),
                      try!(NativeTlsServer::new(id, pw).map_err(|_| {

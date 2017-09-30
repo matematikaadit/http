@@ -19,6 +19,7 @@ extern crate md6;
 
 mod error;
 mod options;
+mod utf8;
 
 pub mod ops;
 pub mod util;
@@ -31,7 +32,6 @@ use std::io::stderr;
 use std::process::exit;
 use std::sync::{Arc, Mutex, Condvar};
 use hyper_native_tls::NativeTlsServer;
-
 
 fn main() {
     let result = actual_main();
@@ -53,9 +53,10 @@ fn result_main() -> Result<(), Error> {
         opts.tls_data = Some(try!(ops::generate_tls_data(&opts.temp_directory)));
     }
 
+    let handler = ops::HttpHandler::new(&opts);
     let mut responder = try!(if let Some(p) = opts.port {
         if let Some(&((ref id, _), ref pw)) = opts.tls_data.as_ref() {
-                Iron::new(ops::HttpHandler::new(&opts)).https(("0.0.0.0", p),
+                Iron::new(utf8::chainer(handler)).https(("0.0.0.0", p),
                                                               try!(NativeTlsServer::new(id, pw).map_err(|_| {
                     Error::Io {
                         desc: "TLS certificate",
@@ -64,7 +65,7 @@ fn result_main() -> Result<(), Error> {
                     }
                 })))
             } else {
-                Iron::new(ops::HttpHandler::new(&opts)).http(("0.0.0.0", p))
+                Iron::new(utf8::chainer(handler)).http(("0.0.0.0", p))
             }
             .map_err(|_| {
                 Error::Io {
@@ -74,7 +75,7 @@ fn result_main() -> Result<(), Error> {
                 }
             })
     } else {
-        ops::try_ports(ops::HttpHandler::new(&opts), util::PORT_SCAN_LOWEST, util::PORT_SCAN_HIGHEST, &opts.tls_data)
+        ops::try_ports(handler, util::PORT_SCAN_LOWEST, util::PORT_SCAN_HIGHEST, &opts.tls_data)
     });
 
     print!("{}Hosting \"{}\" on port {} with",
